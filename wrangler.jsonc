@@ -1,0 +1,13 @@
+// Cloudflare Workers（静的アセット配信）の設定
+// https://developers.cloudflare.com/workers/static-assets/
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "wadai-gacha",
+  "compatibility_date": "2026-09-15",
+  "assets": {
+    // `pnpm build` の出力先をそのまま配信する
+    "directory": "./dist",
+    // SPA なので存在しないパスは index.html を返す
+    "not_found_handling": "single-page-application"
+  }
+}

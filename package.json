@@ -11,6 +11,7 @@
     "dev": "vite --host 0.0.0.0",
     "build": "tsc -b && vite build",
     "preview": "vite preview --host 0.0.0.0",
+    "deploy": "pnpm build && wrangler deploy",
     "typecheck": "tsc -b --noEmit",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
@@ -37,6 +38,7 @@
     "supabase": "^2.117.0",
     "typescript": "^7.0.2",
     "vite": "^8.3.0",
-    "vitest": "^5.0.0"
+    "vitest": "^5.0.0",
+    "wrangler": "^4.131.2"
   }
 }
