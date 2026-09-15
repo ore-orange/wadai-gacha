@@ -24,7 +24,7 @@ export function App() {
 
   return (
     <main>
-      <h1>話題ガチャ（仮）</h1>
+      <h1>話題ガチャ</h1>
 
       {state.status === "loading" && <p>読み込み中...</p>}
 
