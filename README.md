@@ -68,9 +68,8 @@ docker compose exec app pnpm build       # 本番ビルド（dist/）
 ### 依存パッケージを追加したとき
 ```bash
 docker compose exec app pnpm add <package>
-docker compose build   # イメージを作り直す
 ```
-`package.json` / `pnpm-lock.yaml` が変わったら他のメンバーも `docker compose build` を実行する。
+`package.json` / `pnpm-lock.yaml` をコミットする。他のメンバーは `docker compose up` し直すだけで、起動時に自動で `pnpm install` が走って同期される。
 
 ### DB のスキーマを変更するとき
 1. `supabase/migrations/` に `YYYYMMDDHHMMSS_xxx.sql` を追加する（`npx supabase migration new xxx` でひな形を作れる）
@@ -78,9 +77,22 @@ docker compose build   # イメージを作り直す
 3. `npx supabase gen types typescript --local > src/lib/database.types.ts` で TS の型を再生成する
 4. **新しいテーブルには必ず `enable row level security` とポリシーを付ける**（anon key がブラウザに公開されるため）
 
-## Cloudflare Pages のデプロイ設定
+## デプロイ
+### 構成
+- フロント: **Cloudflare Workers**（静的アセット配信）。`wrangler.jsonc` で `dist/` を配信する設定にしている
+- DB: **Supabase**（クラウド）。GitHub 連携により `main` へのマージで `supabase/migrations` が本番 DB に自動適用される
+
+### Cloudflare 側の設定（Workers & Pages → Create → Continue with GitHub）
 | 項目 | 値 |
 |---|---|
 | Build command | `pnpm build` |
-| Build output directory | `dist` |
-| 環境変数 | `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`（本番 Supabase の値） |
+| Deploy command | `npx wrangler deploy` |
+| 環境変数（Build variables） | `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`（本番 Supabase の Publishable key）, `NODE_VERSION=22` |
+
+`main` に push / マージするたびに自動でビルド・デプロイされる。
+
+### 手元からデプロイしたいとき
+```bash
+docker compose exec app pnpm wrangler login
+docker compose exec app pnpm deploy
+```
