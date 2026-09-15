@@ -1,5 +1,7 @@
 # 話題ガチャ
 
+[![CI](https://github.com/ore-orange/wadai-gacha/actions/workflows/ci.yml/badge.svg)](https://github.com/ore-orange/wadai-gacha/actions/workflows/ci.yml)
+
 話題をガチャ形式で提案するアプリ
 
 URL：https://wadai-gacha.hibiki6430code.workers.dev
