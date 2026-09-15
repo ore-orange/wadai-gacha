@@ -6,6 +6,9 @@ const topics = [
   { id: "2", title: "子どもの頃の夢" },
 ];
 
+// supabase クライアントは env が必要なのでモックする（CI には .env が無い）
+vi.mock("@/lib/supabase", () => ({ supabase: {} }));
+
 vi.mock("@/lib/topics", async (importOriginal) => {
   const mod = await importOriginal<typeof import("@/lib/topics")>();
   return { ...mod, fetchTopics: vi.fn(async () => topics) };
