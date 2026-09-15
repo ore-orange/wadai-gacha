@@ -26,7 +26,7 @@ export function App() {
 
   return (
     <main>
-      <h1>話題ガチャ（仮）</h1>
+      <h1>話題ガチャ</h1>
       <p>
         Supabase 接続: <strong>{status}</strong>
         {message && <span> — {message}</span>}
