@@ -1,0 +1,21 @@
+services:
+  app:
+    build: .
+    ports:
+      - "5173:5173"
+    volumes:
+      # ソースをマウントしてホットリロードを効かせる
+      - .:/app
+      # node_modules はコンテナ側のものを使う（ホストと混ざらないようにする）
+      - node_modules:/app/node_modules
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      # macOS / Windows でファイル変更が検知されない場合は true にする
+      VITE_USE_POLLING: ${VITE_USE_POLLING:-false}
+    stdin_open: true
+    tty: true
+
+volumes:
+  node_modules:

@@ -14,3 +14,73 @@ URL：準備中
 - [ひびきたん](https://github.com/hibiki2gou)
 ## エレベータピッチ
 <img width="5333" height="3000" alt="Agile Mini Camp 2026 - Copy of  チーム名  エレベーターピッチ" src="https://github.com/user-attachments/assets/62eff0e1-af89-4025-82d2-f259567a7b94" />
+
+## 技術スタック
+| 分類 | 採用 |
+|---|---|
+| 言語 / UI | TypeScript / React 19 |
+| ビルド | Vite |
+| パッケージマネージャー | pnpm（corepack 経由） |
+| バックエンド | Supabase（Postgres）。フロントから supabase-js で直接アクセスし、データ保護は RLS で行う（専用サーバーなし） |
+| ホスティング | Cloudflare Pages |
+| Lint / Format | Biome |
+| テスト | Vitest |
+
+## 開発環境のセットアップ
+### 必要なもの
+- Docker Desktop
+- Node.js 22 以上（`npx supabase` を使うため。アプリ自体は Docker 内で動く）
+
+### 1. 環境変数
+```bash
+cp .env.example .env
+```
+`VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` を設定する（ローカル Supabase を使う場合は次の手順で表示される値、共有プロジェクトを使う場合はダッシュボードの値）。
+
+### 2. Supabase（ローカル DB）を起動
+```bash
+npx supabase start
+```
+初回はイメージの取得に数分かかる。起動すると `API URL` と `anon key` が表示されるので `.env` に貼る。
+`supabase/migrations` と `supabase/seed.sql` は起動時に自動で適用される。
+
+- 停止: `npx supabase stop`
+- スキーマを変更した後に作り直す: `npx supabase db reset`
+- Studio（GUI）: http://127.0.0.1:54323
+
+### 3. アプリを起動
+```bash
+docker compose up
+```
+http://localhost:5173 を開く。ソースはマウントしているのでホットリロードが効く。
+ホットリロードが効かない場合は `.env` で `VITE_USE_POLLING=true` にする。
+
+### よく使うコマンド
+コンテナ内で実行する（起動していないときは `docker compose run --rm app <cmd>`）。
+```bash
+docker compose exec app pnpm lint        # Lint + フォーマットチェック
+docker compose exec app pnpm lint:fix    # 自動修正
+docker compose exec app pnpm typecheck   # 型チェック
+docker compose exec app pnpm test        # テスト
+docker compose exec app pnpm build       # 本番ビルド（dist/）
+```
+
+### 依存パッケージを追加したとき
+```bash
+docker compose exec app pnpm add <package>
+docker compose build   # イメージを作り直す
+```
+`package.json` / `pnpm-lock.yaml` が変わったら他のメンバーも `docker compose build` を実行する。
+
+### DB のスキーマを変更するとき
+1. `supabase/migrations/` に `YYYYMMDDHHMMSS_xxx.sql` を追加する（`npx supabase migration new xxx` でひな形を作れる）
+2. `npx supabase db reset` でローカル DB に適用する
+3. `npx supabase gen types typescript --local > src/lib/database.types.ts` で TS の型を再生成する
+4. **新しいテーブルには必ず `enable row level security` とポリシーを付ける**（anon key がブラウザに公開されるため）
+
+## Cloudflare Pages のデプロイ設定
+| 項目 | 値 |
+|---|---|
+| Build command | `pnpm build` |
+| Build output directory | `dist` |
+| 環境変数 | `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`（本番 Supabase の値） |

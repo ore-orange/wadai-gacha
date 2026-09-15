@@ -1,0 +1,25 @@
+# dependencies
+node_modules
+
+# build
+dist
+*.tsbuildinfo
+.pnpm-store
+
+# env
+.env
+.env.*
+!.env.example
+
+# logs
+*.log
+
+# editor / OS
+.DS_Store
+.idea
+.vscode/*
+!.vscode/extensions.json
+
+# supabase local
+supabase/.temp
+supabase/.branches
