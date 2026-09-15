@@ -1,7 +1,7 @@
 # 話題ガチャ（仮）
 話題をガチャ形式で提案するアプリ
 
-URL：準備中
+URL：https://wadai-gacha.hibiki6430code.workers.dev
 ## チーム名
 おれオレンジ
 
