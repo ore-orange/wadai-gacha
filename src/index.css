@@ -15,4 +15,50 @@ body {
 main {
   padding: 2rem;
   text-align: center;
+  display: grid;
+  gap: 1.5rem;
+  width: min(100% - 2rem, 32rem);
+}
+
+.result {
+  min-height: 6rem;
+  display: grid;
+  place-items: center;
+  border: 2px dashed color-mix(in srgb, currentColor 30%, transparent);
+  border-radius: 1rem;
+  padding: 1rem;
+}
+
+.topic {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 700;
+}
+
+.placeholder,
+.note {
+  margin: 0;
+  opacity: 0.6;
+}
+
+button {
+  font: inherit;
+  font-size: 1.125rem;
+  font-weight: 600;
+  padding: 0.75rem 2rem;
+  border: none;
+  border-radius: 999px;
+  background: #f97316;
+  color: #fff;
+  cursor: pointer;
+  justify-self: center;
+}
+
+button:hover:not(:disabled) {
+  background: #ea580c;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
