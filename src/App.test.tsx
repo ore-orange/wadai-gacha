@@ -1,17 +1,29 @@
-import { describe, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
-// Supabase クライアントは env が必要なのでテストではモックする
-vi.mock("@/lib/supabase", () => ({
-  supabase: {
-    from: () => ({
-      select: () => Promise.resolve({ error: null, count: 0 }),
-    }),
-  },
-}));
+const topics = [
+  { id: "1", title: "最近ハマっていること" },
+  { id: "2", title: "子どもの頃の夢" },
+];
+
+vi.mock("@/lib/topics", async (importOriginal) => {
+  const mod = await importOriginal<typeof import("@/lib/topics")>();
+  return { ...mod, fetchTopics: vi.fn(async () => topics) };
+});
+
+const { App } = await import("./App");
+
+afterEach(cleanup);
 
 describe("App", () => {
-  it("モジュールを読み込める", async () => {
-    const { App } = await import("./App");
-    expect(typeof App).toBe("function");
+  it("ボタンを押すと話題が 1 つ表示される", async () => {
+    render(<App />);
+    const button = await screen.findByRole("button", { name: "ガチャを回す" });
+
+    fireEvent.click(button);
+
+    const shown = screen.getByText((text) => topics.some((t) => t.title === text));
+    expect(shown).toBeTruthy();
+    expect(screen.getByRole("button", { name: "もう一回" })).toBeTruthy();
   });
 });
