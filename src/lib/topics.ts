@@ -1,15 +1,17 @@
 import { Constants, type Enums, type Tables } from "./database.types";
 import { supabase } from "./supabase";
 
-export type Topic = Pick<Tables<"topics">, "id" | "title" | "situation">;
+export type Topic = Pick<Tables<"topics">, "id" | "title" | "situation" | "university">;
 export type Situation = Enums<"situation_type">;
+export type University = Enums<"university_type">;
 
 /** 絞り込み UI の選択肢。DB の enum から生成されるので `pnpm db:types` を流せば自動で追従する */
 export const SITUATIONS = Constants.public.Enums.situation_type;
+export const UNIVERSITIES = Constants.public.Enums.university_type;
 
 /** 全ての話題を取得する */
 export async function fetchTopics(): Promise<Topic[]> {
-  const { data, error } = await supabase.from("topics").select("id, title, situation");
+  const { data, error } = await supabase.from("topics").select("id, title, situation, university");
   if (error) {
     throw new Error(error.message);
   }

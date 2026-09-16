@@ -3,12 +3,13 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { createClient } from "@supabase/supabase-js";
 
-// data/topics.csv（title,situation）を読み込み、topics テーブルに投入するスクリプト。
+// data/topics.csv を読み込み、topics テーブルに投入するスクリプト。
+// 1 行目のヘッダー（title,situation,university など）で列を判定するので、タグ列は増やせる。
 // RLS で anon key からの INSERT は許可していないため、service_role key で実行する。
 //
 // - タイトルが既に存在する行はスキップ（title の UNIQUE 制約で冪等）
-// - situation が書かれている行は、既存行でも situation を更新する
-// - situation が空の行は新規追加のみ（既存行の situation は変更しない。本番で手動設定した値を消さないため）
+// - タグ列（situation / university …）に値が書かれていれば、既存行でもその列を更新する
+// - 空欄の列は変更しない（本番で手動設定した値を消さないため）
 //
 // ローカル: pnpm db:seed:topics
 // 本番:     GitHub Actions（.github/workflows/seed.yml）が main へのマージ時に実行する
@@ -43,28 +44,37 @@ function clean(value) {
     .trim();
 }
 
-/** "タイトル,シチュエーション" の行を { title, situation } に変換する。区切りは最後のカンマ */
-function parseLine(line) {
-  const i = line.lastIndexOf(",");
-  if (i === -1) {
-    return { title: clean(line), situation: null };
-  }
-  const title = clean(line.slice(0, i));
-  const situation = clean(line.slice(i + 1));
-  return { title, situation: situation === "" ? null : situation };
-}
-
-/** ヘッダー行（title,situation）かどうか。引用符や大文字小文字のゆれがあっても判定する */
-function isHeader(row) {
-  return row.title.toLowerCase() === "title" && (row.situation ?? "").toLowerCase() === "situation";
-}
-
-const rows = readFileSync(filePath, "utf-8")
+const lines = readFileSync(filePath, "utf-8")
   .split("\n")
   .map((line) => clean(line))
-  .filter((line) => line !== "" && !line.startsWith("#"))
-  .map(parseLine)
-  .filter((row) => row.title !== "" && !isHeader(row));
+  .filter((line) => line !== "" && !line.startsWith("#"));
+
+// 1 行目はヘッダー。先頭列は title、残りがタグ列（situation, university, ...）
+const header = (lines.shift() ?? "").split(",").map((c) => clean(c).toLowerCase());
+if (header[0] !== "title") {
+  console.error(
+    `${filePath} の 1 行目は "title,situation,university" のようなヘッダーにしてください。`,
+  );
+  process.exit(1);
+}
+const tagColumns = header.slice(1);
+
+/**
+ * 1 行を { title, situation, university, ... } に変換する。
+ * タグ列の数だけ末尾からカンマで切り出し、残りをタイトルにする（タイトルにカンマがあっても壊れない）。
+ */
+function parseLine(line) {
+  const parts = line.split(",");
+  const tags = parts.splice(Math.max(parts.length - tagColumns.length, 1)).map(clean);
+  const row = { title: clean(parts.join(",")) };
+  tagColumns.forEach((column, i) => {
+    const value = tags[i] ?? "";
+    row[column] = value === "" ? null : value;
+  });
+  return row;
+}
+
+const rows = lines.map(parseLine).filter((row) => row.title !== "");
 
 if (rows.length === 0) {
   console.log(`${filePath} に投入対象の行がありません。`);
@@ -98,26 +108,28 @@ function fail(error) {
   process.exit(1);
 }
 
-// situation あり: 既存行の situation も更新する
-const withSituation = rows.filter((r) => r.situation !== null);
-// situation なし: 新規追加のみ（既存行には触らない）
-const withoutSituation = rows.filter((r) => r.situation === null).map(({ title }) => ({ title }));
+// 「どのタグ列に値があるか」でグループ分けして投入する。
+// 同じ列構成の行だけをまとめて upsert すると、書かれている列だけが更新され、空欄の列は既存値のまま残る。
+const groups = new Map();
+for (const row of rows) {
+  const columns = tagColumns.filter((c) => row[c] !== null);
+  const key = columns.join(",");
+  if (!groups.has(key)) groups.set(key, { columns, rows: [] });
+  groups.get(key).rows.push(row);
+}
 
 let inserted = 0;
 
-if (withSituation.length > 0) {
+for (const { columns, rows: groupRows } of groups.values()) {
+  const payload = groupRows.map((row) => {
+    const obj = { title: row.title };
+    for (const c of columns) obj[c] = row[c];
+    return obj;
+  });
   const { data, error } = await supabase
     .from("topics")
-    .upsert(withSituation, { onConflict: "title" })
-    .select("id");
-  if (error) fail(error);
-  inserted += data.length;
-}
-
-if (withoutSituation.length > 0) {
-  const { data, error } = await supabase
-    .from("topics")
-    .upsert(withoutSituation, { onConflict: "title", ignoreDuplicates: true })
+    // タグが 1 つも無い行は新規追加のみ（既存行に触らない）
+    .upsert(payload, { onConflict: "title", ignoreDuplicates: columns.length === 0 })
     .select("id");
   if (error) fail(error);
   inserted += data.length;

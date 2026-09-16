@@ -40,18 +40,21 @@ export type Database = {
           id: string
           situation: Database["public"]["Enums"]["situation_type"] | null
           title: string
+          university: Database["public"]["Enums"]["university_type"] | null
         }
         Insert: {
           created_at?: string
           id?: string
           situation?: Database["public"]["Enums"]["situation_type"] | null
           title: string
+          university?: Database["public"]["Enums"]["university_type"] | null
         }
         Update: {
           created_at?: string
           id?: string
           situation?: Database["public"]["Enums"]["situation_type"] | null
           title?: string
+          university?: Database["public"]["Enums"]["university_type"] | null
         }
         Relationships: []
       }
@@ -64,6 +67,7 @@ export type Database = {
     }
     Enums: {
       situation_type: "group_work" | "welcome_party" | "mixer"
+      university_type: "ryukyu"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -195,6 +199,7 @@ export const Constants = {
   public: {
     Enums: {
       situation_type: ["group_work", "welcome_party", "mixer"],
+      university_type: ["ryukyu"],
     },
   },
 } as const

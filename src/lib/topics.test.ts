@@ -6,9 +6,9 @@ vi.mock("./supabase", () => ({ supabase: {} }));
 const { pickRandomTopic } = await import("./topics");
 
 const topics = [
-  { id: "a", title: "A", situation: null },
-  { id: "b", title: "B", situation: null },
-  { id: "c", title: "C", situation: null },
+  { id: "a", title: "A", situation: null, university: null },
+  { id: "b", title: "B", situation: null, university: null },
+  { id: "c", title: "C", situation: null, university: null },
 ];
 
 describe("pickRandomTopic", () => {
