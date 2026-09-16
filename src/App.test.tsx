@@ -2,8 +2,8 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const topics = [
-  { id: "1", title: "最近ハマっていること", situation: "サークルの新歓" },
-  { id: "2", title: "子どもの頃の夢", situation: "合コン" },
+  { id: "1", title: "最近ハマっていること", situation: "welcome_party" },
+  { id: "2", title: "子どもの頃の夢", situation: "mixer" },
 ] as const;
 
 // supabase クライアントは env が必要なのでモックする（CI には .env が無い）

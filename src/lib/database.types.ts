@@ -63,7 +63,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      situation_type: "グループワーク" | "サークルの新歓" | "合コン"
+      situation_type: "group_work" | "welcome_party" | "mixer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -194,7 +194,7 @@ export const Constants = {
   },
   public: {
     Enums: {
-      situation_type: ["グループワーク", "サークルの新歓", "合コン"],
+      situation_type: ["group_work", "welcome_party", "mixer"],
     },
   },
 } as const

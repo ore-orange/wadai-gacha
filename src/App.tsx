@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { situationLabel } from "@/lib/situations";
 import { fetchTopics, pickRandomTopic, SITUATIONS, type Situation, type Topic } from "@/lib/topics";
 
 type State =
@@ -68,7 +69,7 @@ export function App() {
                   aria-pressed={situation === value}
                   onClick={() => toggleSituation(value)}
                 >
-                  {value}
+                  {situationLabel(value)}
                 </button>
               ))}
             </div>

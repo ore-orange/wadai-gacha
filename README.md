@@ -105,7 +105,8 @@ docker compose exec app pnpm add <package>
 `main` にマージされると GitHub Actions が本番 DB に自動投入するので、ローカルと本番で同じデータになる。
 
 1. `data/topics.csv` に `タイトル,シチュエーション` の形式で 1 行 1 件追記する
-   - シチュエーションは `グループワーク` / `サークルの新歓` / `合コン` のいずれか。空欄なら未分類
+   - シチュエーションは英語キーで書く: `group_work`（グループワーク）/ `welcome_party`（サークルの新歓）/ `mixer`（合コン）。空欄なら未分類
+   - 画面に出す日本語名は `src/lib/situations.ts` で管理。シチュエーションを増やすときは enum のマイグレーション → `pnpm db:types` → `situations.ts` に表示名を追加
    - `#` から始まる行はコメント
 2. ローカル DB に反映して動作確認: `docker compose exec app pnpm db:seed:topics`（app コンテナ起動中に実行）
    - 初回は `.env` の `SUPABASE_SERVICE_ROLE_KEY` に、`npx supabase status` で表示される **Secret key**（`sb_secret_...`）を設定しておく
