@@ -60,6 +60,16 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: "合コン", pressed: false })).toBeTruthy();
   });
 
+  it("大学を選んでいないときは大学タグ付きの話題は出ない", async () => {
+    render(<App />);
+    const button = await screen.findByRole("button", { name: "もう一回" });
+
+    for (let i = 0; i < 20; i++) {
+      expect(screen.queryByText("方言について")).toBeNull();
+      fireEvent.click(button);
+    }
+  });
+
   it("大学を選ぶとその大学の話題だけが出る", async () => {
     render(<App />);
     const chip = await screen.findByRole("button", { name: "琉球大学" });

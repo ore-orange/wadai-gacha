@@ -29,3 +29,19 @@ export function pickRandomTopic(topics: Topic[], excludeId?: string): Topic | nu
   }
   return candidates[Math.floor(Math.random() * candidates.length)];
 }
+
+/**
+ * 絞り込み条件に合う話題だけを返す。
+ * - シチュエーション: 未選択（null）なら全部が対象
+ * - 大学: 未選択（null）なら「大学タグの無い話題」だけが対象。
+ *   特定の大学向けの話題は、その大学を選んだときだけ出す
+ */
+export function filterTopics(
+  topics: Topic[],
+  situation: Situation | null,
+  university: University | null,
+): Topic[] {
+  return topics.filter(
+    (t) => (situation === null || t.situation === situation) && t.university === university,
+  );
+}
