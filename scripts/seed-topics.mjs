@@ -13,6 +13,13 @@ import { createClient } from "@supabase/supabase-js";
 // ローカル: pnpm db:seed:topics
 // 本番:     GitHub Actions（.github/workflows/seed.yml）が main へのマージ時に実行する
 //           手動なら SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... node scripts/seed-topics.mjs
+//
+// 終了コード:
+//   0 = 成功
+//   1 = 失敗（設定ミスなど。再試行しても直らない）
+//   2 = DB のスキーマがまだ CSV に追いついていない（マイグレーション適用待ち。再試行すれば通る）
+//       main へのマージ時は Supabase のマイグレーション適用とこのスクリプトが同時に走るため、
+//       ワークフロー側で 2 のときだけ待って再試行する
 
 const url = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -66,6 +73,31 @@ if (rows.length === 0) {
 
 const supabase = createClient(url, serviceRoleKey);
 
+/** DB のスキーマが CSV に追いついていない（enum 値や列が無い）エラーか */
+function isSchemaNotReady(error) {
+  // 22P02: invalid input value for enum / 42703: column does not exist / PGRST204: schema cache に列が無い
+  return (
+    error.code === "22P02" ||
+    error.code === "42703" ||
+    error.code === "PGRST204" ||
+    /invalid input value for enum|does not exist|schema cache/.test(error.message)
+  );
+}
+
+function fail(error) {
+  console.error("投入に失敗しました:", error.message);
+  if (isSchemaNotReady(error)) {
+    console.error(
+      "DB のスキーマが data/topics.csv の内容に追いついていません。\n" +
+        "- main へのマージ直後なら、Supabase のマイグレーション適用待ちの可能性があります（ワークフローが再試行します）\n" +
+        "- ローカルなら `npx supabase db reset` で最新のマイグレーションを適用してください\n" +
+        "- situation の値が enum に含まれているか data/topics.csv の先頭コメントも確認してください",
+    );
+    process.exit(2);
+  }
+  process.exit(1);
+}
+
 // situation あり: 既存行の situation も更新する
 const withSituation = rows.filter((r) => r.situation !== null);
 // situation なし: 新規追加のみ（既存行には触らない）
@@ -78,15 +110,7 @@ if (withSituation.length > 0) {
     .from("topics")
     .upsert(withSituation, { onConflict: "title" })
     .select("id");
-  if (error) {
-    console.error("投入に失敗しました:", error.message);
-    if (error.message.includes("situation_type")) {
-      console.error(
-        "situation の値が enum に含まれていません。data/topics.csv の先頭コメントを確認してください。",
-      );
-    }
-    process.exit(1);
-  }
+  if (error) fail(error);
   inserted += data.length;
 }
 
@@ -95,10 +119,7 @@ if (withoutSituation.length > 0) {
     .from("topics")
     .upsert(withoutSituation, { onConflict: "title", ignoreDuplicates: true })
     .select("id");
-  if (error) {
-    console.error("投入に失敗しました:", error.message);
-    process.exit(1);
-  }
+  if (error) fail(error);
   inserted += data.length;
 }
 
