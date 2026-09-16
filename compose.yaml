@@ -14,6 +14,11 @@ services:
     environment:
       # macOS / Windows でファイル変更が検知されない場合は true にする
       VITE_USE_POLLING: ${VITE_USE_POLLING:-false}
+      # コンテナ内から scripts/seed-topics.mjs を実行するとき、ホストで動く
+      # ローカル Supabase に届くようにする（.env の VITE_SUPABASE_URL より優先される）
+      SUPABASE_URL: ${SUPABASE_URL:-http://host.docker.internal:54321}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     stdin_open: true
     tty: true
 

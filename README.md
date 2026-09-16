@@ -60,7 +60,7 @@ npx supabase start
 `supabase/migrations` と `supabase/seed.sql` は起動時に自動で適用される。
 
 - 停止: `npx supabase stop`
-- スキーマを変更した後に作り直す: `npx supabase db reset`
+- スキーマを変更した後に作り直す: `npx supabase db reset` → `docker compose exec app pnpm db:seed:topics`（話題データを入れ直す）
 - Studio（GUI）: http://127.0.0.1:54323
 
 ### 3. アプリを起動
@@ -101,19 +101,30 @@ docker compose exec app pnpm add <package>
 
 ### 話題データを追加するとき
 
-`topics` テーブルは RLS で SELECT のみ許可しているため、anon key からは INSERT できない。
-データの追加は `data/topics.txt` を編集し、投入スクリプトを実行する（ダッシュボードの SQL Editor で直接 INSERT する必要はない）。
+話題は `data/topics.csv` で管理する（ダッシュボードの Table Editor / SQL Editor で直接触らない）。
+`main` にマージされると GitHub Actions が本番 DB に自動投入するので、ローカルと本番で同じデータになる。
 
-1. `data/topics.txt` に話題を1行1件で追記する（`#` から始まる行はコメント）
-2. ローカル DB に反映: `pnpm db:seed:topics`（`.env` の `SUPABASE_SERVICE_ROLE_KEY` を使う。ローカル Supabase の service_role key は `npx supabase start` の出力に表示される）
-3. 既に存在するタイトルは自動でスキップされるので、同じファイルを何度実行しても安全（`title` に unique 制約あり）
-4. 動作確認できたら `data/topics.txt` の差分をコミットして PR を出す
-5. 本番へ反映する場合は、mainマージ後に本番の service_role key（Supabase ダッシュボード → Project Settings > API）を使って手元から一度だけ実行する。鍵は `.env` に書かず、コマンド実行時だけ環境変数で渡す。
+1. `data/topics.csv` に `タイトル,シチュエーション` の形式で 1 行 1 件追記する
+   - シチュエーションは `グループワーク` / `サークルの新歓` / `合コン` のいずれか。空欄なら未分類
+   - `#` から始まる行はコメント
+2. ローカル DB に反映して動作確認: `docker compose exec app pnpm db:seed:topics`（app コンテナ起動中に実行）
+   - 初回は `.env` の `SUPABASE_SERVICE_ROLE_KEY` に、`npx supabase status` で表示される **Secret key**（`sb_secret_...`）を設定しておく
+   - 同じタイトルは自動でスキップされるので何度実行しても安全
+   - シチュエーションを書いた行は既存行の値も更新する。空欄の行は既存行の値を変えない
+3. `data/topics.csv` の差分をコミットして PR を出す
+4. `main` にマージ → **Actions の「Seed topics (production)」が本番に投入する**（結果は Actions のログで確認）
 
-```bash
-SUPABASE_URL=https://xxxx.supabase.co SUPABASE_SERVICE_ROLE_KEY=xxxx \
-  node scripts/seed-topics.mjs
-```
+手動で本番に投入したいときは Actions 画面から「Run workflow」で同じジョブを実行できる。
+
+#### 初回だけ必要な設定（GitHub Secrets）
+GitHub の Settings → Secrets and variables → Actions に以下を登録する。
+
+| Name | 値 |
+|---|---|
+| `SUPABASE_URL` | `https://kbvnbglrysgjhnphlsgm.supabase.co` |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase Dashboard → Project Settings → API Keys → **Secret key**（`sb_secret_...`） |
+
+Secret key は RLS を無視できる鍵なので、GitHub Secrets 以外（`.env`、`VITE_*`、チャット等）には置かない。
 
 ## デプロイ
 
