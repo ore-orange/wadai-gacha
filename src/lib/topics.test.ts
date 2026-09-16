@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 // supabase クライアントは env が必要なのでモックする
 vi.mock("./supabase", () => ({ supabase: {} }));
 
-const { pickRandomTopic } = await import("./topics");
+const { filterTopics, pickRandomTopic } = await import("./topics");
 
 const topics = [
   { id: "a", title: "A", situation: null, university: null },
@@ -31,5 +31,26 @@ describe("pickRandomTopic", () => {
 
   it("候補が 1 つだけなら excludeId と同じでもそれを返す", () => {
     expect(pickRandomTopic([topics[0]], "a")).toEqual(topics[0]);
+  });
+});
+
+describe("filterTopics", () => {
+  const all = [
+    { id: "1", title: "一般A", situation: "mixer", university: null },
+    { id: "2", title: "一般B", situation: "group_work", university: null },
+    { id: "3", title: "琉大", situation: "mixer", university: "ryukyu" },
+  ] as const;
+
+  it("何も選んでいないときは大学タグの無い話題だけ", () => {
+    expect(filterTopics([...all], null, null).map((t) => t.id)).toEqual(["1", "2"]);
+  });
+
+  it("大学を選ぶとその大学の話題だけ", () => {
+    expect(filterTopics([...all], null, "ryukyu").map((t) => t.id)).toEqual(["3"]);
+  });
+
+  it("シチュエーションと大学は AND", () => {
+    expect(filterTopics([...all], "mixer", null).map((t) => t.id)).toEqual(["1"]);
+    expect(filterTopics([...all], "group_work", "ryukyu")).toEqual([]);
   });
 });

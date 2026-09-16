@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { situationLabel } from "@/lib/situations";
 import {
   fetchTopics,
+  filterTopics,
   pickRandomTopic,
   SITUATIONS,
   type Situation,
@@ -24,14 +25,17 @@ export function App() {
   // 読み込み完了と同時に 1 件引いて、開いた瞬間から話題が出ている状態にする
   useEffect(() => {
     fetchTopics()
-      .then((topics) => setState({ status: "ready", topics, current: pickRandomTopic(topics) }))
+      .then((topics) =>
+        setState({
+          status: "ready",
+          topics,
+          current: pickRandomTopic(filterTopics(topics, null, null)),
+        }),
+      )
       .catch((e: unknown) =>
         setState({ status: "error", message: e instanceof Error ? e.message : String(e) }),
       );
   }, []);
-
-  const filterTopics = (topics: Topic[], s: Situation | null, u: University | null) =>
-    topics.filter((t) => (s === null || t.situation === s) && (u === null || t.university === u));
 
   const topics = state.status === "ready" ? state.topics : [];
   const candidates = filterTopics(topics, situation, university);
