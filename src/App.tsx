@@ -1,6 +1,15 @@
 import { useEffect, useState } from "react";
 import { situationLabel } from "@/lib/situations";
-import { fetchTopics, pickRandomTopic, SITUATIONS, type Situation, type Topic } from "@/lib/topics";
+import {
+  fetchTopics,
+  pickRandomTopic,
+  SITUATIONS,
+  type Situation,
+  type Topic,
+  UNIVERSITIES,
+  type University,
+} from "@/lib/topics";
+import { universityLabel } from "@/lib/universities";
 
 type State =
   | { status: "loading" }
@@ -10,6 +19,7 @@ type State =
 export function App() {
   const [state, setState] = useState<State>({ status: "loading" });
   const [situation, setSituation] = useState<Situation | null>(null);
+  const [university, setUniversity] = useState<University | null>(null);
 
   useEffect(() => {
     fetchTopics()
@@ -20,7 +30,11 @@ export function App() {
   }, []);
 
   const topics = state.status === "ready" ? state.topics : [];
-  const candidates = situation === null ? topics : topics.filter((t) => t.situation === situation);
+  const candidates = topics.filter(
+    (t) =>
+      (situation === null || t.situation === situation) &&
+      (university === null || t.university === university),
+  );
 
   const spin = () => {
     if (state.status !== "ready") return;
@@ -28,9 +42,16 @@ export function App() {
   };
 
   // 同じものをもう一度押したら解除。絞り込み対象外の結果が残らないよう表示中の話題も消す
+  const clearCurrent = () => {
+    if (state.status === "ready") setState({ ...state, current: null });
+  };
   const toggleSituation = (value: Situation) => {
     setSituation((prev) => (prev === value ? null : value));
-    if (state.status === "ready") setState({ ...state, current: null });
+    clearCurrent();
+  };
+  const toggleUniversity = (value: University) => {
+    setUniversity((prev) => (prev === value ? null : value));
+    clearCurrent();
   };
 
   return (
@@ -55,7 +76,7 @@ export function App() {
           </button>
           {state.topics.length === 0 && <p className="note">話題がまだ登録されていません</p>}
           {state.topics.length > 0 && candidates.length === 0 && (
-            <p className="note">このシチュエーションの話題はまだありません</p>
+            <p className="note">この条件の話題はまだありません</p>
           )}
 
           <section className="filter">
@@ -70,6 +91,23 @@ export function App() {
                   onClick={() => toggleSituation(value)}
                 >
                   {situationLabel(value)}
+                </button>
+              ))}
+            </div>
+          </section>
+
+          <section className="filter">
+            <h2 className="filter-label">大学</h2>
+            <div className="chips">
+              {UNIVERSITIES.map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  className="chip"
+                  aria-pressed={university === value}
+                  onClick={() => toggleUniversity(value)}
+                >
+                  {universityLabel(value)}
                 </button>
               ))}
             </div>

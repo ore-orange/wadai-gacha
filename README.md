@@ -104,14 +104,15 @@ docker compose exec app pnpm add <package>
 話題は `data/topics.csv` で管理する（ダッシュボードの Table Editor / SQL Editor で直接触らない）。
 `main` にマージされると GitHub Actions が本番 DB に自動投入するので、ローカルと本番で同じデータになる。
 
-1. `data/topics.csv` に `タイトル,シチュエーション` の形式で 1 行 1 件追記する
+1. `data/topics.csv` に `タイトル,シチュエーション,大学` の形式で 1 行 1 件追記する
    - シチュエーションは英語キーで書く: `group_work`（グループワーク）/ `welcome_party`（サークルの新歓）/ `mixer`（合コン）。空欄なら未分類
-   - 画面に出す日本語名は `src/lib/situations.ts` で管理。シチュエーションを増やすときは enum のマイグレーション → `pnpm db:types` → `situations.ts` に表示名を追加
+   - 大学は英語キーで書く: `ryukyu`（琉球大学）。空欄なら大学に紐づかない
+   - 画面に出す日本語名は `src/lib/situations.ts` / `src/lib/universities.ts` で管理。値を増やすときは enum のマイグレーション → `pnpm db:types` → 表示名を追加
    - `#` から始まる行はコメント
 2. ローカル DB に反映して動作確認: `docker compose exec app pnpm db:seed:topics`（app コンテナ起動中に実行）
    - 初回は `.env` の `SUPABASE_SERVICE_ROLE_KEY` に、`npx supabase status` で表示される **Secret key**（`sb_secret_...`）を設定しておく
    - 同じタイトルは自動でスキップされるので何度実行しても安全
-   - シチュエーションを書いた行は既存行の値も更新する。空欄の行は既存行の値を変えない
+   - タグを書いた列は既存行の値も更新する。空欄の列は既存行の値を変えない
 3. `data/topics.csv` の差分をコミットして PR を出す
 4. `main` にマージ → **Actions の「Seed topics (production)」が本番に投入する**（結果は Actions のログで確認）
 

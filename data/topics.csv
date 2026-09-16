@@ -1,13 +1,19 @@
-# 話題データ。1 行 = 1 件。形式: タイトル,シチュエーション
+# 話題データ。1 行 = 1 件。形式: タイトル,シチュエーション,大学
 # - シチュエーションは英語のキーで書く: group_work（グループワーク） / welcome_party（サークルの新歓） / mixer（合コン）。空欄なら未分類（全シチュエーションで出る）
-# - 画面に出す日本語名は src/lib/situations.ts で管理している
+# - 大学は英語のキーで書く: ryukyu（琉球大学）。空欄なら大学に紐づかない（全大学で出る）
+# - 画面に出す日本語名は src/lib/situations.ts / src/lib/universities.ts で管理している
 # - # で始まる行と空行は無視される
-# - ローカルに反映: pnpm db:seed:topics  / main にマージすると本番にも自動で反映される
-# - 同じタイトルが既にあればスキップ。シチュエーションを書いた行は既存の値を更新する（空欄なら既存の値を変えない）
-title,situation
-最近ハマっていること,group_work
-子どもの頃の夢,group_work
-行ってみたい場所,welcome_party
-今日の朝ごはん,welcome_party
-おすすめの映画・本,mixer
-好きな女の子について,mixer
+# - ローカルに反映: docker compose exec app pnpm db:seed:topics  / main にマージすると本番にも自動で反映される
+# - 同じタイトルが既にあればスキップ。タグを書いた列は既存の値を更新する（空欄の列は既存の値を変えない）
+title,situation,university
+最近ハマっていること,group_work,
+子どもの頃の夢,group_work,
+行ってみたい場所,welcome_party,
+今日の朝ごはん,welcome_party,
+おすすめの映画・本,mixer,
+好きな女の子について,mixer,
+方言について,,ryukyu
+教習所通ってる？？,,ryukyu
+どこから大学に通ってるの？？,,ryukyu
+工学部のイメージについて,,ryukyu
+何の授業取った？,,ryukyu

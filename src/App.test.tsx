@@ -2,8 +2,9 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const topics = [
-  { id: "1", title: "最近ハマっていること", situation: "welcome_party" },
-  { id: "2", title: "子どもの頃の夢", situation: "mixer" },
+  { id: "1", title: "最近ハマっていること", situation: "welcome_party", university: null },
+  { id: "2", title: "子どもの頃の夢", situation: "mixer", university: null },
+  { id: "3", title: "方言について", situation: null, university: "ryukyu" },
 ] as const;
 
 // supabase クライアントは env が必要なのでモックする（CI には .env が無い）
@@ -51,5 +52,18 @@ describe("App", () => {
     fireEvent.click(chip);
 
     expect(screen.getByRole("button", { name: "合コン", pressed: false })).toBeTruthy();
+  });
+
+  it("大学を選ぶとその大学の話題だけが出る", async () => {
+    render(<App />);
+    const chip = await screen.findByRole("button", { name: "琉球大学" });
+
+    fireEvent.click(chip);
+    expect(screen.getByRole("button", { name: "琉球大学", pressed: true })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "ガチャを回す" }));
+
+    expect(screen.getByText("方言について")).toBeTruthy();
+    expect(screen.queryByText("子どもの頃の夢")).toBeNull();
   });
 });
