@@ -21,7 +21,8 @@
     "db:start": "supabase start",
     "db:stop": "supabase stop",
     "db:reset": "supabase db reset",
-    "db:types": "supabase gen types typescript --local > src/lib/database.types.ts"
+    "db:types": "supabase gen types typescript --local > src/lib/database.types.ts",
+    "db:seed:topics": "node --env-file=.env scripts/seed-topics.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.116.0",

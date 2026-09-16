@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { fetchTopics, pickRandomTopic, type Topic } from "@/lib/topics";
+import { fetchTopics, pickRandomTopic, SITUATIONS, type Situation, type Topic } from "@/lib/topics";
 
 type State =
   | { status: "loading" }
@@ -8,6 +8,7 @@ type State =
 
 export function App() {
   const [state, setState] = useState<State>({ status: "loading" });
+  const [situation, setSituation] = useState<Situation | null>(null);
 
   useEffect(() => {
     fetchTopics()
@@ -17,9 +18,18 @@ export function App() {
       );
   }, []);
 
+  const topics = state.status === "ready" ? state.topics : [];
+  const candidates = situation === null ? topics : topics.filter((t) => t.situation === situation);
+
   const spin = () => {
     if (state.status !== "ready") return;
-    setState({ ...state, current: pickRandomTopic(state.topics, state.current?.id) });
+    setState({ ...state, current: pickRandomTopic(candidates, state.current?.id) });
+  };
+
+  // 同じものをもう一度押したら解除。絞り込み対象外の結果が残らないよう表示中の話題も消す
+  const toggleSituation = (value: Situation) => {
+    setSituation((prev) => (prev === value ? null : value));
+    if (state.status === "ready") setState({ ...state, current: null });
   };
 
   return (
@@ -39,10 +49,30 @@ export function App() {
               <p className="placeholder">ボタンを押して話題を引こう</p>
             )}
           </section>
-          <button type="button" onClick={spin} disabled={state.topics.length === 0}>
+          <button type="button" onClick={spin} disabled={candidates.length === 0}>
             {state.current ? "もう一回" : "ガチャを回す"}
           </button>
           {state.topics.length === 0 && <p className="note">話題がまだ登録されていません</p>}
+          {state.topics.length > 0 && candidates.length === 0 && (
+            <p className="note">このシチュエーションの話題はまだありません</p>
+          )}
+
+          <section className="filter">
+            <h2 className="filter-label">シチュエーション</h2>
+            <div className="chips">
+              {SITUATIONS.map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  className="chip"
+                  aria-pressed={situation === value}
+                  onClick={() => toggleSituation(value)}
+                >
+                  {value}
+                </button>
+              ))}
+            </div>
+          </section>
         </>
       )}
     </main>

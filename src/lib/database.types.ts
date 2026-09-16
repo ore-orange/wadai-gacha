@@ -38,16 +38,19 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          situation: Database["public"]["Enums"]["situation_type"] | null
           title: string
         }
         Insert: {
           created_at?: string
           id?: string
+          situation?: Database["public"]["Enums"]["situation_type"] | null
           title: string
         }
         Update: {
           created_at?: string
           id?: string
+          situation?: Database["public"]["Enums"]["situation_type"] | null
           title?: string
         }
         Relationships: []
@@ -60,7 +63,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      situation_type: "グループワーク" | "サークルの新歓" | "合コン"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -190,7 +193,9 @@ export const Constants = {
     Enums: {},
   },
   public: {
-    Enums: {},
+    Enums: {
+      situation_type: ["グループワーク", "サークルの新歓", "合コン"],
+    },
   },
 } as const
 

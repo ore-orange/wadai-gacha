@@ -99,6 +99,22 @@ docker compose exec app pnpm add <package>
 3. `npx supabase gen types typescript --local > src/lib/database.types.ts` で TS の型を再生成する
 4. **新しいテーブルには必ず `enable row level security` とポリシーを付ける**（anon key がブラウザに公開されるため）
 
+### 話題データを追加するとき
+
+`topics` テーブルは RLS で SELECT のみ許可しているため、anon key からは INSERT できない。
+データの追加は `data/topics.txt` を編集し、投入スクリプトを実行する（ダッシュボードの SQL Editor で直接 INSERT する必要はない）。
+
+1. `data/topics.txt` に話題を1行1件で追記する（`#` から始まる行はコメント）
+2. ローカル DB に反映: `pnpm db:seed:topics`（`.env` の `SUPABASE_SERVICE_ROLE_KEY` を使う。ローカル Supabase の service_role key は `npx supabase start` の出力に表示される）
+3. 既に存在するタイトルは自動でスキップされるので、同じファイルを何度実行しても安全（`title` に unique 制約あり）
+4. 動作確認できたら `data/topics.txt` の差分をコミットして PR を出す
+5. 本番へ反映する場合は、mainマージ後に本番の service_role key（Supabase ダッシュボード → Project Settings > API）を使って手元から一度だけ実行する。鍵は `.env` に書かず、コマンド実行時だけ環境変数で渡す。
+
+```bash
+SUPABASE_URL=https://xxxx.supabase.co SUPABASE_SERVICE_ROLE_KEY=xxxx \
+  node scripts/seed-topics.mjs
+```
+
 ## デプロイ
 
 ### 構成
