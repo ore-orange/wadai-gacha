@@ -20,15 +20,23 @@ const { App } = await import("./App");
 afterEach(cleanup);
 
 describe("App", () => {
-  it("ボタンを押すと話題が 1 つ表示される", async () => {
+  it("開いた時点で話題が 1 つ表示されている", async () => {
     render(<App />);
-    const button = await screen.findByRole("button", { name: "ガチャを回す" });
-
-    fireEvent.click(button);
+    await screen.findByRole("button", { name: "もう一回" });
 
     const shown = screen.getByText((text) => topics.some((t) => t.title === text));
     expect(shown).toBeTruthy();
-    expect(screen.getByRole("button", { name: "もう一回" })).toBeTruthy();
+  });
+
+  it("もう一回を押すと別の話題に変わる", async () => {
+    render(<App />);
+    const button = await screen.findByRole("button", { name: "もう一回" });
+    const before = screen.getByText((text) => topics.some((t) => t.title === text)).textContent;
+
+    fireEvent.click(button);
+
+    const after = screen.getByText((text) => topics.some((t) => t.title === text)).textContent;
+    expect(after).not.toBe(before);
   });
 
   it("シチュエーションを選ぶとハイライトされ、その話題だけが出る", async () => {
@@ -37,8 +45,6 @@ describe("App", () => {
 
     fireEvent.click(chip);
     expect(screen.getByRole("button", { name: "合コン", pressed: true })).toBeTruthy();
-
-    fireEvent.click(screen.getByRole("button", { name: "ガチャを回す" }));
 
     expect(screen.getByText("子どもの頃の夢")).toBeTruthy();
     expect(screen.queryByText("最近ハマっていること")).toBeNull();
@@ -60,8 +66,6 @@ describe("App", () => {
 
     fireEvent.click(chip);
     expect(screen.getByRole("button", { name: "琉球大学", pressed: true })).toBeTruthy();
-
-    fireEvent.click(screen.getByRole("button", { name: "ガチャを回す" }));
 
     expect(screen.getByText("方言について")).toBeTruthy();
     expect(screen.queryByText("子どもの頃の夢")).toBeNull();

@@ -21,42 +21,48 @@ export function App() {
   const [situation, setSituation] = useState<Situation | null>(null);
   const [university, setUniversity] = useState<University | null>(null);
 
+  // 読み込み完了と同時に 1 件引いて、開いた瞬間から話題が出ている状態にする
   useEffect(() => {
     fetchTopics()
-      .then((topics) => setState({ status: "ready", topics, current: null }))
+      .then((topics) => setState({ status: "ready", topics, current: pickRandomTopic(topics) }))
       .catch((e: unknown) =>
         setState({ status: "error", message: e instanceof Error ? e.message : String(e) }),
       );
   }, []);
 
+  const filterTopics = (topics: Topic[], s: Situation | null, u: University | null) =>
+    topics.filter((t) => (s === null || t.situation === s) && (u === null || t.university === u));
+
   const topics = state.status === "ready" ? state.topics : [];
-  const candidates = topics.filter(
-    (t) =>
-      (situation === null || t.situation === situation) &&
-      (university === null || t.university === university),
-  );
+  const candidates = filterTopics(topics, situation, university);
 
   const spin = () => {
     if (state.status !== "ready") return;
     setState({ ...state, current: pickRandomTopic(candidates, state.current?.id) });
   };
 
-  // 同じものをもう一度押したら解除。絞り込み対象外の結果が残らないよう表示中の話題も消す
-  const clearCurrent = () => {
-    if (state.status === "ready") setState({ ...state, current: null });
-  };
+  // 絞り込みを変えたら、その条件で改めて 1 件引き直す（同じものをもう一度押したら解除）
   const toggleSituation = (value: Situation) => {
-    setSituation((prev) => (prev === value ? null : value));
-    clearCurrent();
+    const next = situation === value ? null : value;
+    setSituation(next);
+    if (state.status === "ready") {
+      setState({
+        ...state,
+        current: pickRandomTopic(filterTopics(state.topics, next, university)),
+      });
+    }
   };
   const toggleUniversity = (value: University) => {
-    setUniversity((prev) => (prev === value ? null : value));
-    clearCurrent();
+    const next = university === value ? null : value;
+    setUniversity(next);
+    if (state.status === "ready") {
+      setState({ ...state, current: pickRandomTopic(filterTopics(state.topics, situation, next)) });
+    }
   };
 
   return (
     <main>
-      <h1>話題ガチャ</h1>
+      <h1>T.M.Generation</h1>
 
       {state.status === "loading" && <p>読み込み中...</p>}
 
@@ -68,7 +74,7 @@ export function App() {
             {state.current ? (
               <p className="topic">{state.current.title}</p>
             ) : (
-              <p className="placeholder">ボタンを押して話題を引こう</p>
+              <p className="placeholder">話題がありません</p>
             )}
           </section>
           <button type="button" onClick={spin} disabled={candidates.length === 0}>
