@@ -28,23 +28,36 @@ if (!url || !serviceRoleKey) {
 
 const filePath = resolve(process.argv[2] ?? "data/topics.csv");
 
+/** 前後の空白と引用符を取り除く（"タイトル" のように囲まれていても読めるように） */
+function clean(value) {
+  return value
+    .trim()
+    .replace(/^["']+|["']+$/g, "")
+    .trim();
+}
+
 /** "タイトル,シチュエーション" の行を { title, situation } に変換する。区切りは最後のカンマ */
 function parseLine(line) {
   const i = line.lastIndexOf(",");
   if (i === -1) {
-    return { title: line, situation: null };
+    return { title: clean(line), situation: null };
   }
-  const title = line.slice(0, i).trim();
-  const situation = line.slice(i + 1).trim();
+  const title = clean(line.slice(0, i));
+  const situation = clean(line.slice(i + 1));
   return { title, situation: situation === "" ? null : situation };
+}
+
+/** ヘッダー行（title,situation）かどうか。引用符や大文字小文字のゆれがあっても判定する */
+function isHeader(row) {
+  return row.title.toLowerCase() === "title" && (row.situation ?? "").toLowerCase() === "situation";
 }
 
 const rows = readFileSync(filePath, "utf-8")
   .split("\n")
-  .map((line) => line.trim())
-  .filter((line) => line !== "" && !line.startsWith("#") && line !== "title,situation")
+  .map((line) => clean(line))
+  .filter((line) => line !== "" && !line.startsWith("#"))
   .map(parseLine)
-  .filter((row) => row.title !== "");
+  .filter((row) => row.title !== "" && !isHeader(row));
 
 if (rows.length === 0) {
   console.log(`${filePath} に投入対象の行がありません。`);
