@@ -1,0 +1,36 @@
+name: Seed topics (production)
+
+# main で話題データが変わったら本番 Supabase に投入する
+on:
+  push:
+    branches: [main]
+    paths:
+      - data/topics.csv
+      - scripts/seed-topics.mjs
+  # Actions 画面から手動実行もできる
+  workflow_dispatch:
+
+concurrency:
+  group: seed-production
+  cancel-in-progress: false
+
+jobs:
+  seed:
+    name: Seed topics to production
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --prod
+
+      - name: Seed topics
+        run: node scripts/seed-topics.mjs
+        env:
+          # GitHub Settings → Secrets and variables → Actions に登録する
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}

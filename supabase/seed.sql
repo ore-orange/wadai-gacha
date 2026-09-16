@@ -1,7 +1,3 @@
--- ローカル開発用の初期データ（`supabase db reset` で投入される）
-insert into public.topics (title) values
-  ('最近ハマっていること'),
-  ('子どもの頃の夢'),
-  ('行ってみたい場所'),
-  ('今日の朝ごはん'),
-  ('おすすめの映画・本');
+-- ローカル開発用の初期データ。
+-- 話題データは data/topics.csv で管理しており、`pnpm db:reset` の中で
+-- scripts/seed-topics.mjs が投入する（本番と同じ仕組み）。ここには書かない。
