@@ -18,7 +18,7 @@ jobs:
   seed:
     name: Seed topics to production
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -28,8 +28,19 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile --prod
 
+      # main へのマージ時は Supabase のマイグレーション適用（GitHub 連携）と同時に走るため、
+      # スキーマがまだ古い（終了コード 2）ときは最大 10 分待って再試行する
       - name: Seed topics
-        run: node scripts/seed-topics.mjs
+        run: |
+          for attempt in $(seq 1 20); do
+            node scripts/seed-topics.mjs && exit 0
+            code=$?
+            if [ "$code" -ne 2 ]; then exit "$code"; fi
+            echo "::notice::マイグレーション適用待ち（${attempt}/20）。30 秒後に再試行します"
+            sleep 30
+          done
+          echo "::error::10 分待ちましたが DB のスキーマが更新されませんでした。Supabase の Integrations でマイグレーションの状態を確認してください"
+          exit 2
         env:
           # GitHub Settings → Secrets and variables → Actions に登録する
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
