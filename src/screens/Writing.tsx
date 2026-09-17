@@ -69,12 +69,7 @@ function EntryForm({
       <p className="theme-text big">小テーマ: {entry.theme}</p>
       <label className="field with-particle">
         <span className="sr-only">{slotLabel(entry.slot)}の内容</span>
-        <input
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder={PLACEHOLDERS[entry.slot]}
-          maxLength={60}
-        />
+        <input value={text} onChange={(e) => setText(e.target.value)} maxLength={60} />
         {SLOT_PARTICLES[entry.slot] && (
           <span className="particle" aria-hidden="true">
             {SLOT_PARTICLES[entry.slot]}
@@ -92,11 +87,3 @@ function EntryForm({
     </form>
   );
 }
-
-const PLACEHOLDERS: Record<MyEntry["slot"], string> = {
-  when: "例: 高 2 の文化祭で",
-  where: "例: 体育館の裏",
-  who: "例: 姉",
-  what: "例: 焼きそば",
-  how: "例: 全部落とした",
-};

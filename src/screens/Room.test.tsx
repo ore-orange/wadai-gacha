@@ -97,7 +97,7 @@ describe("Room", () => {
     render(<Room session={session} onLeave={() => {}} />);
     expect(screen.getByText("小テーマ: 家の外")).toBeTruthy();
     // 助詞まで打っても外して送る
-    fireEvent.change(screen.getByPlaceholderText("例: 体育館の裏"), {
+    fireEvent.change(screen.getByRole("textbox"), {
       target: { value: "駅前で" },
     });
     fireEvent.click(screen.getByRole("button", { name: "送信" }));
