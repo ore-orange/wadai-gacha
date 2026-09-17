@@ -9,7 +9,21 @@ const rerollTheme = vi.fn(async () => {});
 const dealSlots = vi.fn(async () => {});
 const submitEntry = vi.fn(async () => {});
 const finishRoom = vi.fn(async () => {});
-vi.mock("@/lib/game", () => ({ startRound, rerollTheme, dealSlots, submitEntry, finishRoom }));
+const setRevealIndex = vi.fn(async () => {});
+const reshuffleSentences = vi.fn(async () => {});
+vi.mock("@/lib/game", async (importOriginal) => {
+  const mod = await importOriginal<typeof import("@/lib/game")>();
+  return {
+    ROUND_MODE_LABELS: mod.ROUND_MODE_LABELS,
+    startRound,
+    rerollTheme,
+    dealSlots,
+    submitEntry,
+    finishRoom,
+    setRevealIndex,
+    reshuffleSentences,
+  };
+});
 
 // useRoomState をテストごとに差し替える
 let current: RoomState | null = null;
@@ -36,12 +50,13 @@ afterEach(() => {
 });
 
 describe("Room", () => {
-  it("ロビー: ホストには開始ボタンが出る", () => {
+  it("ロビー: ホストは遊び方を選んで開始できる", () => {
     current = base;
     render(<Room session={session} onLeave={() => {}} />);
     expect(screen.getByText("1234")).toBeTruthy();
+    fireEvent.click(screen.getByRole("radio", { name: /1 人 5 枠/ }));
     fireEvent.click(screen.getByRole("button", { name: "ガチャへ進む" }));
-    expect(startRound).toHaveBeenCalled();
+    expect(startRound).toHaveBeenCalledWith(session, "everyone");
   });
 
   it("ロビー: 参加者には開始ボタンが出ない", () => {
@@ -62,6 +77,7 @@ describe("Room", () => {
         submitted_count: 0,
         total_count: 0,
         sentences: null,
+        reveal_index: 0,
         themes: { when: { id: "t1", text: "高校時代で一番楽しかった時期は？" } },
         my_entries: [],
       },
@@ -90,6 +106,7 @@ describe("Room", () => {
         submitted_count: 0,
         total_count: 5,
         sentences: null,
+        reveal_index: 0,
         themes: {},
         my_entries: [
           {
@@ -135,6 +152,7 @@ describe("Room", () => {
             { slot: "how", text: "なくした" },
           ],
         ],
+        reveal_index: 0,
         themes: {},
         my_entries: [],
       },
@@ -143,7 +161,73 @@ describe("Room", () => {
     for (const t of ["昨日", "駅前で", "姉が", "スマホを", "なくした"]) {
       expect(screen.getByText(t)).toBeTruthy();
     }
+    // 1 文しか無いので送りボタンは出ない
+    expect(screen.queryByRole("button", { name: "次の文へ" })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "次のラウンドへ" }));
-    expect(startRound).toHaveBeenCalled();
+    expect(startRound).toHaveBeenCalledWith(session, "single");
+  });
+
+  it("発表（1 人 5 枠）: 1 文ずつ表示し、ホストが送れる・シャッフルできる", () => {
+    const mk = (n: number) =>
+      (["when", "where", "who", "what", "how"] as const).map((slot) => ({
+        slot,
+        text: `${slot}${n}`,
+      }));
+    current = {
+      ...base,
+      room: { ...base.room, phase: "playing" },
+      round: {
+        id: "rd",
+        number: 1,
+        mode: "everyone",
+        phase: "revealed",
+        submitted_count: 10,
+        total_count: 10,
+        sentences: [mk(1), mk(2)],
+        reveal_index: 0,
+        themes: {},
+        my_entries: [],
+      },
+    };
+    render(<Room session={session} onLeave={() => {}} />);
+    expect(screen.getByText("1 / 2 文目")).toBeTruthy();
+    expect(screen.getByText("when1")).toBeTruthy();
+    expect(screen.queryByText("when2")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "次の文へ" }));
+    expect(setRevealIndex).toHaveBeenCalledWith(session, "rd", 1);
+  });
+
+  it("発表（1 人 5 枠）: 最後の文では一覧が出て、シャッフルできる", () => {
+    const mk = (n: number) =>
+      (["when", "where", "who", "what", "how"] as const).map((slot) => ({
+        slot,
+        text: `${slot}${n}`,
+      }));
+    current = {
+      ...base,
+      room: { ...base.room, phase: "playing" },
+      round: {
+        id: "rd",
+        number: 1,
+        mode: "everyone",
+        phase: "revealed",
+        submitted_count: 10,
+        total_count: 10,
+        sentences: [mk(1), mk(2)],
+        reveal_index: 1,
+        themes: {},
+        my_entries: [],
+      },
+    };
+    render(<Room session={session} onLeave={() => {}} />);
+    expect(screen.getByText("2 / 2 文目")).toBeTruthy();
+    expect(screen.getByText("全部の文を見る")).toBeTruthy();
+    expect(screen.getAllByText("when1").length).toBe(1); // 一覧側
+    expect(screen.getAllByText("when2").length).toBe(2); // 現在の文 + 一覧
+    expect(screen.getByRole("button", { name: "次の文へ" })).toHaveProperty("disabled", true);
+
+    fireEvent.click(screen.getByRole("button", { name: "もう一度シャッフル" }));
+    expect(reshuffleSentences).toHaveBeenCalledWith(session, "rd");
   });
 });

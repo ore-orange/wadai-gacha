@@ -1,6 +1,15 @@
 import { useState } from "react";
 import { useRoomState } from "@/hooks/useRoomState";
-import { dealSlots, finishRoom, rerollTheme, startRound, submitEntry } from "@/lib/game";
+import {
+  dealSlots,
+  finishRoom,
+  type RoundMode,
+  rerollTheme,
+  reshuffleSentences,
+  setRevealIndex,
+  startRound,
+  submitEntry,
+} from "@/lib/game";
 import type { Session } from "@/lib/session";
 import type { Slot } from "@/lib/slots";
 import { Lobby } from "./Lobby";
@@ -15,6 +24,7 @@ export function Room({ session, onLeave }: Props) {
   const { state, error, refresh } = useRoomState(session);
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [mode, setMode] = useState<RoundMode>("single");
 
   const act = async (fn: () => Promise<void>) => {
     setBusy(true);
@@ -64,7 +74,9 @@ export function Room({ session, onLeave }: Props) {
         state={state}
         isHost={isHost}
         busy={busy}
-        onStart={() => act(() => startRound(session))}
+        mode={mode}
+        onModeChange={setMode}
+        onStart={() => act(() => startRound(session, mode))}
       />
     );
   } else if (round.phase === "rolling") {
@@ -92,7 +104,10 @@ export function Room({ session, onLeave }: Props) {
         round={round}
         isHost={isHost}
         busy={busy}
-        onNext={() => act(() => startRound(session))}
+        onShow={(i) => act(() => setRevealIndex(session, round.id, i))}
+        onReshuffle={() => act(() => reshuffleSentences(session, round.id))}
+        // 次のラウンドも同じ遊び方で始める
+        onNextRound={() => act(() => startRound(session, round.mode))}
         onFinish={() => act(() => finishRoom(session))}
       />
     );

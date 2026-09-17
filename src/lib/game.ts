@@ -5,6 +5,18 @@ import { supabase } from "./supabase";
 
 export type RoomPhase = Enums<"room_phase">;
 export type RoundPhase = Enums<"round_phase">;
+export type RoundMode = Enums<"round_mode">;
+
+export const ROUND_MODE_LABELS: Record<RoundMode, { title: string; description: string }> = {
+  single: {
+    title: "みんなで 1 文",
+    description: "5 つの枠をランダムに配り、1 人 1 枠ずつ書いて 1 つの文を作る",
+  },
+  everyone: {
+    title: "1 人 5 枠",
+    description: "全員が 5 枠すべてを書き、枠ごとに混ぜて人数分の文を作る",
+  },
+};
 
 export type Player = { id: string; name: string };
 
@@ -22,11 +34,12 @@ export type SentencePart = { slot: Slot; text: string | null };
 export type Round = {
   id: string;
   number: number;
-  mode: Enums<"round_mode">;
+  mode: RoundMode;
   phase: RoundPhase;
   submitted_count: number;
   total_count: number;
   sentences: SentencePart[][] | null;
+  reveal_index: number;
   themes: Partial<Record<Slot, { id: string; text: string }>>;
   my_entries: MyEntry[];
 };
@@ -69,10 +82,11 @@ export async function getRoomState(session: Session): Promise<RoomState> {
   return data as RoomState;
 }
 
-export async function startRound(session: Session): Promise<void> {
+export async function startRound(session: Session, mode: RoundMode): Promise<void> {
   const { error } = await supabase.rpc("start_round", {
     p_room_id: session.roomId,
     p_token: session.token,
+    p_mode: mode,
   });
   if (error) fail(error);
 }
@@ -98,6 +112,27 @@ export async function submitEntry(session: Session, entryId: string, text: strin
   const { error } = await supabase.rpc("submit_entry", {
     p_entry_id: entryId,
     p_text: text,
+    p_token: session.token,
+  });
+  if (error) fail(error);
+}
+
+export async function setRevealIndex(
+  session: Session,
+  roundId: string,
+  index: number,
+): Promise<void> {
+  const { error } = await supabase.rpc("set_reveal_index", {
+    p_round_id: roundId,
+    p_index: index,
+    p_token: session.token,
+  });
+  if (error) fail(error);
+}
+
+export async function reshuffleSentences(session: Session, roundId: string): Promise<void> {
+  const { error } = await supabase.rpc("reshuffle_sentences", {
+    p_round_id: roundId,
     p_token: session.token,
   });
   if (error) fail(error);

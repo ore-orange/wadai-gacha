@@ -210,6 +210,7 @@ export type Database = {
           mode: Database["public"]["Enums"]["round_mode"]
           number: number
           phase: Database["public"]["Enums"]["round_phase"]
+          reveal_index: number
           room_id: string
           sentences: Json | null
           submitted_count: number
@@ -221,6 +222,7 @@ export type Database = {
           mode?: Database["public"]["Enums"]["round_mode"]
           number: number
           phase?: Database["public"]["Enums"]["round_phase"]
+          reveal_index?: number
           room_id: string
           sentences?: Json | null
           submitted_count?: number
@@ -232,6 +234,7 @@ export type Database = {
           mode?: Database["public"]["Enums"]["round_mode"]
           number?: number
           phase?: Database["public"]["Enums"]["round_phase"]
+          reveal_index?: number
           room_id?: string
           sentences?: Json | null
           submitted_count?: number
@@ -292,6 +295,27 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      _assert_revealed_host: {
+        Args: { p_round_id: string; p_token: string }
+        Returns: {
+          created_at: string
+          id: string
+          mode: Database["public"]["Enums"]["round_mode"]
+          number: number
+          phase: Database["public"]["Enums"]["round_phase"]
+          reveal_index: number
+          room_id: string
+          sentences: Json | null
+          submitted_count: number
+          total_count: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "rounds"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       _compose_sentences: { Args: { p_round_id: string }; Returns: Json }
       _player_from_token: {
         Args: { p_token: string }
@@ -337,8 +361,20 @@ export type Database = {
         }
         Returns: undefined
       }
+      reshuffle_sentences: {
+        Args: { p_round_id: string; p_token: string }
+        Returns: undefined
+      }
+      set_reveal_index: {
+        Args: { p_index: number; p_round_id: string; p_token: string }
+        Returns: undefined
+      }
       start_round: {
-        Args: { p_room_id: string; p_token: string }
+        Args: {
+          p_mode?: Database["public"]["Enums"]["round_mode"]
+          p_room_id: string
+          p_token: string
+        }
         Returns: string
       }
       submit_entry: {
