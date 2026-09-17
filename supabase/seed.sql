@@ -1,3 +1,3 @@
 -- ローカル開発用の初期データ。
--- 話題データは data/topics.csv で管理しており、`pnpm db:reset` の中で
--- scripts/seed-topics.mjs が投入する（本番と同じ仕組み）。ここには書かない。
+-- 小テーマは data/themes.csv で管理しており、`pnpm db:seed:themes`（scripts/seed-themes.mjs）で投入する。
+-- ここには書かない。
