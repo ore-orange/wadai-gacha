@@ -17,7 +17,7 @@ export function App() {
 
   return (
     <main>
-      <h1>T.M.Generation</h1>
+      <h1>T.S.Revolution</h1>
       {session ? <Room session={session} onLeave={leave} /> : <Home onEnter={enter} />}
     </main>
   );
