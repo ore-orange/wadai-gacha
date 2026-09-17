@@ -96,14 +96,15 @@ describe("Room", () => {
     };
     render(<Room session={session} onLeave={() => {}} />);
     expect(screen.getByText("小テーマ: 家の外")).toBeTruthy();
-    fireEvent.change(screen.getByPlaceholderText("例: 体育館の裏で"), {
+    // 助詞まで打っても外して送る
+    fireEvent.change(screen.getByPlaceholderText("例: 体育館の裏"), {
       target: { value: "駅前で" },
     });
     fireEvent.click(screen.getByRole("button", { name: "送信" }));
-    expect(submitEntry).toHaveBeenCalledWith(session, "e1", "駅前で");
+    expect(submitEntry).toHaveBeenCalledWith(session, "e1", "駅前");
   });
 
-  it("発表: 文がつながって表示され、ホストは次へ進める", () => {
+  it("発表: 助詞付きで文がつながって表示され、ホストは次へ進める", () => {
     current = {
       ...base,
       room: { ...base.room, phase: "playing" },
@@ -117,9 +118,9 @@ describe("Room", () => {
         sentences: [
           [
             { slot: "when", text: "昨日" },
-            { slot: "where", text: "駅前で" },
-            { slot: "who", text: "姉が" },
-            { slot: "what", text: "スマホを" },
+            { slot: "where", text: "駅前" },
+            { slot: "who", text: "姉" },
+            { slot: "what", text: "スマホ" },
             { slot: "how", text: "なくした" },
           ],
         ],

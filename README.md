@@ -120,6 +120,7 @@ docker compose exec app pnpm add <package>
 
 1. `data/themes.csv` に `枠,小テーマ` の形式で 1 行 1 件追記する
    - 枠は `when`（いつ）/ `where`（どこで）/ `who`（だれが）/ `what`（なにを）/ `how`（どうした）
+   - 小テーマに助詞（で・が・を）は付けない（「学校」「自分」「食べ物」）。助詞は画面側で枠ごとに自動で付く
    - `#` から始まる行はコメント
 2. ローカル DB に反映して動作確認: `docker compose exec app pnpm db:seed:themes`（app コンテナ起動中に実行）
    - 初回は `.env` の `SUPABASE_SERVICE_ROLE_KEY` に、`npx supabase status` で表示される **Secret key**（`sb_secret_...`）を設定しておく
