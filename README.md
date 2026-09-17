@@ -118,13 +118,13 @@ docker compose exec app pnpm add <package>
 質問は `data/themes.csv` で管理する（ダッシュボードの Table Editor / SQL Editor で直接触らない）。
 `main` にマージされると GitHub Actions が本番 DB に自動投入するので、ローカルと本番で同じデータになる。
 
-1. `data/themes.csv` に `枠,質問` の形式で 1 行 1 件追記する（「〜は？」の形。答えの「〜」だけをユーザーが書き、助詞は自動で付く）
+1. `data/themes.csv` に `枠,質問,答えの例` の形式で 1 行 1 件追記する（質問は「〜は？」の形。答えの「〜」だけをユーザーが書き、助詞は自動で付く。答えの例は入力欄に薄く表示されるので助詞なしで書く）
    - 枠は `when`（いつ）/ `where`（どこで）/ `who`（だれが）/ `what`（なにを）/ `how`（どうした）
    - 答えが 時期（when）/ 場所（where）/ 人（who）/ もの（what）/ 「〜した」（how）になる質問にする
    - `#` から始まる行はコメント
 2. ローカル DB に反映して動作確認: `docker compose exec app pnpm db:seed:themes`（app コンテナ起動中に実行）
    - 初回は `.env` の `SUPABASE_SERVICE_ROLE_KEY` に、`npx supabase status` で表示される **Secret key**（`sb_secret_...`）を設定しておく
-   - 同じ枠・同じ質問は自動でスキップされるので何度実行しても安全
+   - 同じ枠・同じ質問は答えの例だけ更新されるので何度実行しても安全
 3. `data/themes.csv` の差分をコミットして PR を出す
 4. `main` にマージ → **Actions の「Seed themes (production)」が本番に投入する**（結果は Actions のログで確認）
 

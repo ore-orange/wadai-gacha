@@ -3,9 +3,9 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { createClient } from "@supabase/supabase-js";
 
-// data/themes.csv（slot,text）を読み込み、themes テーブルに投入するスクリプト。
+// data/themes.csv（slot,text,example）を読み込み、themes テーブルに投入するスクリプト。
 // RLS で anon key からの INSERT は許可していないため、service_role key で実行する。
-// 同じ (slot, text) は UNIQUE 制約でスキップされるので、何度実行しても安全。
+// 同じ (slot, text) は UNIQUE 制約で新規追加されず、example だけ更新される（何度実行しても安全）。
 //
 // ローカル: pnpm db:seed:themes
 // 本番:     GitHub Actions（.github/workflows/seed.yml）が main へのマージ時に実行する
@@ -46,16 +46,32 @@ const lines = readFileSync(filePath, "utf-8")
   .filter((line) => line !== "" && !line.startsWith("#"));
 
 const header = (lines.shift() ?? "").split(",").map((c) => clean(c).toLowerCase());
-if (header[0] !== "slot" || header[1] !== "text") {
-  console.error(`${filePath} の 1 行目は "slot,text" にしてください。`);
+if (header[0] !== "slot" || header[1] !== "text" || header[2] !== "example") {
+  console.error(`${filePath} の 1 行目は "slot,text,example" にしてください。`);
   process.exit(1);
 }
 
-/** "枠,小テーマ" の行を { slot, text } にする。小テーマにカンマがあっても壊れないよう最初のカンマで分ける */
+/**
+ * "枠,質問,答えの例" の行を { slot, text, example } にする。
+ * 最初のカンマで枠、最後のカンマで例を切り出し、間を質問にする（質問にカンマがあっても壊れない）
+ */
 function parseLine(line) {
-  const i = line.indexOf(",");
-  if (i === -1) return null;
-  return { slot: clean(line.slice(0, i)).toLowerCase(), text: clean(line.slice(i + 1)) };
+  const first = line.indexOf(",");
+  const last = line.lastIndexOf(",");
+  if (first === -1) return null;
+  if (last === first) {
+    return {
+      slot: clean(line.slice(0, first)).toLowerCase(),
+      text: clean(line.slice(first + 1)),
+      example: null,
+    };
+  }
+  const example = clean(line.slice(last + 1));
+  return {
+    slot: clean(line.slice(0, first)).toLowerCase(),
+    text: clean(line.slice(first + 1, last)),
+    example: example === "" ? null : example,
+  };
 }
 
 const rows = lines.map(parseLine).filter((row) => row !== null && row.text !== "");
@@ -88,10 +104,7 @@ function isSchemaNotReady(error) {
   );
 }
 
-const { data, error } = await supabase
-  .from("themes")
-  .upsert(rows, { onConflict: "slot,text", ignoreDuplicates: true })
-  .select("id");
+const { error } = await supabase.from("themes").upsert(rows, { onConflict: "slot,text" });
 
 if (error) {
   console.error("投入に失敗しました:", error.message);
@@ -108,5 +121,5 @@ if (error) {
 
 const bySlot = SLOTS.map((s) => `${s}: ${rows.filter((r) => r.slot === s).length}`).join(", ");
 console.log(
-  `${filePath} の ${rows.length} 件を処理しました（新規追加: ${data.length} 件、既存のためスキップ: ${rows.length - data.length} 件）。枠ごとの件数 → ${bySlot}`,
+  `${filePath} の ${rows.length} 件を投入しました（既存の質問は答えの例を更新）。枠ごとの件数 → ${bySlot}`,
 );

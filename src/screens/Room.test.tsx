@@ -92,12 +92,21 @@ describe("Room", () => {
         sentences: null,
         themes: {},
         my_entries: [
-          { id: "e1", slot: "where", theme: "最近よく行く場所は？", text: null, submitted: false },
+          {
+            id: "e1",
+            slot: "where",
+            theme: "最近よく行く場所は？",
+            example: "駅前のマック",
+            text: null,
+            submitted: false,
+          },
         ],
       },
     };
     render(<Room session={session} onLeave={() => {}} />);
     expect(screen.getByText("最近よく行く場所は？")).toBeTruthy();
+    // 質問に合った例がプレースホルダーに出る
+    expect(screen.getByPlaceholderText("例: 駅前のマック")).toBeTruthy();
     // 助詞まで打っても外して送る
     fireEvent.change(screen.getByRole("textbox"), {
       target: { value: "駅前で" },

@@ -250,18 +250,21 @@ export type Database = {
       themes: {
         Row: {
           created_at: string
+          example: string | null
           id: string
           slot: Database["public"]["Enums"]["slot_type"]
           text: string
         }
         Insert: {
           created_at?: string
+          example?: string | null
           id?: string
           slot: Database["public"]["Enums"]["slot_type"]
           text: string
         }
         Update: {
           created_at?: string
+          example?: string | null
           id?: string
           slot?: Database["public"]["Enums"]["slot_type"]
           text?: string
