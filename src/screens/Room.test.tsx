@@ -62,17 +62,17 @@ describe("Room", () => {
         submitted_count: 0,
         total_count: 0,
         sentences: null,
-        themes: { when: { id: "t1", text: "高校生の頃" } },
+        themes: { when: { id: "t1", text: "高校時代で一番楽しかった時期は？" } },
         my_entries: [],
       },
     };
     render(<Room session={session} onLeave={() => {}} />);
-    expect(screen.getByText("高校生の頃")).toBeTruthy();
+    expect(screen.getByText("高校時代で一番楽しかった時期は？")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "いつの小テーマを引き直す" }));
     expect(rerollTheme).toHaveBeenCalledWith(session, "rd", "when");
 
     // 操作中はボタンが無効になるので、終わるのを待ってから次の操作
-    const deal = screen.getByRole("button", { name: "この小テーマで配る" });
+    const deal = screen.getByRole("button", { name: "この質問で配る" });
     await waitFor(() => expect(deal).toHaveProperty("disabled", false));
     fireEvent.click(deal);
     expect(dealSlots).toHaveBeenCalledWith(session, "rd");
@@ -91,11 +91,13 @@ describe("Room", () => {
         total_count: 5,
         sentences: null,
         themes: {},
-        my_entries: [{ id: "e1", slot: "where", theme: "家の外", text: null, submitted: false }],
+        my_entries: [
+          { id: "e1", slot: "where", theme: "最近よく行く場所は？", text: null, submitted: false },
+        ],
       },
     };
     render(<Room session={session} onLeave={() => {}} />);
-    expect(screen.getByText("小テーマ: 家の外")).toBeTruthy();
+    expect(screen.getByText("最近よく行く場所は？")).toBeTruthy();
     // 助詞まで打っても外して送る
     fireEvent.change(screen.getByRole("textbox"), {
       target: { value: "駅前で" },

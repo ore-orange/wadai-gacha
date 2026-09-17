@@ -113,18 +113,18 @@ docker compose exec app pnpm add <package>
 3. `npx supabase gen types typescript --local > src/lib/database.types.ts` で TS の型を再生成する
 4. **新しいテーブルには必ず `enable row level security` とポリシーを付ける**（anon key がブラウザに公開されるため）
 
-### 小テーマを追加するとき
+### 質問（小テーマ）を追加するとき
 
-小テーマは `data/themes.csv` で管理する（ダッシュボードの Table Editor / SQL Editor で直接触らない）。
+質問は `data/themes.csv` で管理する（ダッシュボードの Table Editor / SQL Editor で直接触らない）。
 `main` にマージされると GitHub Actions が本番 DB に自動投入するので、ローカルと本番で同じデータになる。
 
-1. `data/themes.csv` に `枠,小テーマ` の形式で 1 行 1 件追記する
+1. `data/themes.csv` に `枠,質問` の形式で 1 行 1 件追記する（「〜は？」の形。答えの「〜」だけをユーザーが書き、助詞は自動で付く）
    - 枠は `when`（いつ）/ `where`（どこで）/ `who`（だれが）/ `what`（なにを）/ `how`（どうした）
-   - 小テーマに助詞（で・が・を）は付けない（「学校」「自分」「食べ物」）。助詞は画面側で枠ごとに自動で付く
+   - 答えが 時期（when）/ 場所（where）/ 人（who）/ もの（what）/ 「〜した」（how）になる質問にする
    - `#` から始まる行はコメント
 2. ローカル DB に反映して動作確認: `docker compose exec app pnpm db:seed:themes`（app コンテナ起動中に実行）
    - 初回は `.env` の `SUPABASE_SERVICE_ROLE_KEY` に、`npx supabase status` で表示される **Secret key**（`sb_secret_...`）を設定しておく
-   - 同じ枠・同じ小テーマは自動でスキップされるので何度実行しても安全
+   - 同じ枠・同じ質問は自動でスキップされるので何度実行しても安全
 3. `data/themes.csv` の差分をコミットして PR を出す
 4. `main` にマージ → **Actions の「Seed themes (production)」が本番に投入する**（結果は Actions のログで確認）
 

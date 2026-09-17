@@ -13,7 +13,7 @@ type Props = {
 export function Rolling({ round, isHost, busy, onReroll, onDeal, onFinish }: Props) {
   return (
     <>
-      <h2>ラウンド {round.number} のお題</h2>
+      <h2>ラウンド {round.number} の質問</h2>
       <ul className="themes">
         {SLOTS.map((slot) => (
           <li key={slot} className="theme-row">
@@ -36,10 +36,10 @@ export function Rolling({ round, isHost, busy, onReroll, onDeal, onFinish }: Pro
 
       {isHost ? (
         <>
-          <p className="note">気に入らない枠は ↻ で引き直せます。決まったら配りましょう</p>
+          <p className="note">気に入らない質問は ↻ で引き直せます。決まったら配りましょう</p>
           <div className="actions">
             <button type="button" onClick={onDeal} disabled={busy}>
-              この小テーマで配る
+              この質問で配る
             </button>
             <button type="button" className="secondary" onClick={onFinish} disabled={busy}>
               終了する
@@ -47,7 +47,7 @@ export function Rolling({ round, isHost, busy, onReroll, onDeal, onFinish }: Pro
           </div>
         </>
       ) : (
-        <p className="note">ホストがお題を決めています…</p>
+        <p className="note">ホストが質問を決めています…</p>
       )}
     </>
   );

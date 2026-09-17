@@ -236,6 +236,13 @@ button.link {
   text-align: center;
 }
 
+.question {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
 .sentence-text {
   margin: 0;
   font-size: 1.35rem;
