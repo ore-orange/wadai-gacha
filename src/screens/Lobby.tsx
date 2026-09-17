@@ -1,13 +1,17 @@
-import type { RoomState } from "@/lib/game";
+import { ROUND_MODE_LABELS, type RoomState, type RoundMode } from "@/lib/game";
 
 type Props = {
   state: RoomState;
   isHost: boolean;
   busy: boolean;
+  mode: RoundMode;
+  onModeChange: (mode: RoundMode) => void;
   onStart: () => void;
 };
 
-export function Lobby({ state, isHost, busy, onStart }: Props) {
+const MODES: RoundMode[] = ["single", "everyone"];
+
+export function Lobby({ state, isHost, busy, mode, onModeChange, onStart }: Props) {
   return (
     <>
       <section className="card">
@@ -32,9 +36,32 @@ export function Lobby({ state, isHost, busy, onStart }: Props) {
       </section>
 
       {isHost ? (
-        <button type="button" onClick={onStart} disabled={busy}>
-          ガチャへ進む
-        </button>
+        <>
+          <section className="card">
+            <h2>遊び方</h2>
+            <fieldset className="modes">
+              <legend className="sr-only">遊び方</legend>
+              {MODES.map((m) => (
+                <label key={m} className="mode">
+                  <input
+                    type="radio"
+                    name="mode"
+                    value={m}
+                    checked={mode === m}
+                    onChange={() => onModeChange(m)}
+                  />
+                  <span className="mode-body">
+                    <strong>{ROUND_MODE_LABELS[m].title}</strong>
+                    <span className="note">{ROUND_MODE_LABELS[m].description}</span>
+                  </span>
+                </label>
+              ))}
+            </fieldset>
+          </section>
+          <button type="button" onClick={onStart} disabled={busy}>
+            ガチャへ進む
+          </button>
+        </>
       ) : (
         <p className="note">ホストが開始するのを待っています…</p>
       )}

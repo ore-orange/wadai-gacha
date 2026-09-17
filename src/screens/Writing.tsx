@@ -32,7 +32,7 @@ export function Writing({ round, busy, onSubmit }: Props) {
           <p>
             送信しました。全員が書き終わるのを待っています…{" "}
             <strong>
-              {round.submitted_count} / {round.total_count}
+              {round.submitted_count} / {round.total_count} 枠
             </strong>
           </p>
         </section>
