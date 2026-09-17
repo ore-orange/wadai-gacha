@@ -4,3 +4,19 @@
 # - ローカルに反映: docker compose exec app pnpm db:seed:themes  / main にマージすると本番にも自動で反映される
 # - 同じ枠・同じ小テーマが既にあればスキップされる（何度実行しても安全）
 slot,text
+
+when,昨日
+when,高校生の頃
+when,子どもの頃
+where,家の外
+where,学校で
+where,旅行先で
+who,自分が
+who,家族の誰かが
+who,友達が
+what,食べ物を
+what,スマホを
+what,大事なものを
+how,失敗した
+how,なくした
+how,大笑いした
