@@ -2,7 +2,21 @@
 
 [![CI](https://github.com/ore-orange/wadai-gacha/actions/workflows/ci.yml/badge.svg)](https://github.com/ore-orange/wadai-gacha/actions/workflows/ci.yml)
 
-話題をガチャ形式で提案するアプリ
+「いつ・どこで・だれが・なにを・どうした」の 5 つの枠を、みんなで 1 つずつ埋めて 1 つの文を作るゲーム。
+各枠には毎回ガチャで「小テーマ」（例: いつ → 高校生の頃）が付き、本当の出来事を書くことでお互いを知るきっかけになる。
+
+### 遊び方（MVP）
+1. ホストが部屋を作り、4 桁のコードを共有。参加者は各自のスマホで名前とコードを入れて参加
+2. ホストがガチャを回して 5 枠の小テーマを決める（枠ごとに引き直し可）→ 配る
+3. 各参加者にランダムに枠が配られる（5 枠は必ず全部埋まる。人数が少なければ 1 人複数枠、多ければ 1 枠複数人）
+4. 自分の枠だけ入力して送信。全員分が揃うと自動で発表
+5. 全員の回答を枠順につなげた文が表示される（誰が書いたかは伏せる）。ホストが「次のラウンドへ」または「終了」
+
+### 仕組み
+- サーバーは無く、supabase-js から Postgres 関数（RPC）を呼ぶだけで進行する。関数は `supabase/migrations` にある
+- ログイン無し。参加時に発行されるトークン（localStorage に保存）で本人確認する
+- 画面同期は Supabase Realtime（`rooms` / `players` / `rounds` / `round_themes` の変更を購読）+ 5 秒ごとのポーリング
+- 回答（`entries`）はクライアントから直接読めない。発表時に DB 側で文に組み立てて `rounds.sentences` として公開する
 
 URL：https://wadai-gacha.hibiki6430code.workers.dev
 
@@ -31,7 +45,7 @@ URL：https://wadai-gacha.hibiki6430code.workers.dev
 | ビルド                 | Vite                                                                                                         |
 | パッケージマネージャー | pnpm（corepack 経由）                                                                                        |
 | バックエンド           | Supabase（Postgres）。フロントから supabase-js で直接アクセスし、データ保護は RLS で行う（専用サーバーなし） |
-| ホスティング           | Cloudflare Pages                                                                                             |
+| ホスティング           | Cloudflare Workers（静的アセット配信）                                                                        |
 | Lint / Format          | Biome                                                                                                        |
 | テスト                 | Vitest                                                                                                       |
 
@@ -60,7 +74,7 @@ npx supabase start
 `supabase/migrations` と `supabase/seed.sql` は起動時に自動で適用される。
 
 - 停止: `npx supabase stop`
-- スキーマを変更した後に作り直す: `npx supabase db reset` → `docker compose exec app pnpm db:seed:topics`（話題データを入れ直す）
+- スキーマを変更した後に作り直す: `npx supabase db reset` → `docker compose exec app pnpm db:seed:themes`（小テーマを入れ直す）
 - Studio（GUI）: http://127.0.0.1:54323
 
 ### 3. アプリを起動
@@ -99,22 +113,19 @@ docker compose exec app pnpm add <package>
 3. `npx supabase gen types typescript --local > src/lib/database.types.ts` で TS の型を再生成する
 4. **新しいテーブルには必ず `enable row level security` とポリシーを付ける**（anon key がブラウザに公開されるため）
 
-### 話題データを追加するとき
+### 小テーマを追加するとき
 
-話題は `data/topics.csv` で管理する（ダッシュボードの Table Editor / SQL Editor で直接触らない）。
+小テーマは `data/themes.csv` で管理する（ダッシュボードの Table Editor / SQL Editor で直接触らない）。
 `main` にマージされると GitHub Actions が本番 DB に自動投入するので、ローカルと本番で同じデータになる。
 
-1. `data/topics.csv` に `タイトル,シチュエーション,大学` の形式で 1 行 1 件追記する
-   - シチュエーションは英語キーで書く: `group_work`（グループワーク）/ `welcome_party`（サークルの新歓）/ `mixer`（合コン）。空欄なら未分類
-   - 大学は英語キーで書く: `ryukyu`（琉球大学）。空欄なら大学に紐づかない
-   - 画面に出す日本語名は `src/lib/situations.ts` / `src/lib/universities.ts` で管理。値を増やすときは enum のマイグレーション → `pnpm db:types` → 表示名を追加
+1. `data/themes.csv` に `枠,小テーマ` の形式で 1 行 1 件追記する
+   - 枠は `when`（いつ）/ `where`（どこで）/ `who`（だれが）/ `what`（なにを）/ `how`（どうした）
    - `#` から始まる行はコメント
-2. ローカル DB に反映して動作確認: `docker compose exec app pnpm db:seed:topics`（app コンテナ起動中に実行）
+2. ローカル DB に反映して動作確認: `docker compose exec app pnpm db:seed:themes`（app コンテナ起動中に実行）
    - 初回は `.env` の `SUPABASE_SERVICE_ROLE_KEY` に、`npx supabase status` で表示される **Secret key**（`sb_secret_...`）を設定しておく
-   - 同じタイトルは自動でスキップされるので何度実行しても安全
-   - タグを書いた列は既存行の値も更新する。空欄の列は既存行の値を変えない
-3. `data/topics.csv` の差分をコミットして PR を出す
-4. `main` にマージ → **Actions の「Seed topics (production)」が本番に投入する**（結果は Actions のログで確認）
+   - 同じ枠・同じ小テーマは自動でスキップされるので何度実行しても安全
+3. `data/themes.csv` の差分をコミットして PR を出す
+4. `main` にマージ → **Actions の「Seed themes (production)」が本番に投入する**（結果は Actions のログで確認）
 
 手動で本番に投入したいときは Actions 画面から「Run workflow」で同じジョブを実行できる。
 

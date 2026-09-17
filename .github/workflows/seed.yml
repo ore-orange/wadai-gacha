@@ -1,12 +1,12 @@
-name: Seed topics (production)
+name: Seed themes (production)
 
 # main で話題データが変わったら本番 Supabase に投入する
 on:
   push:
     branches: [main]
     paths:
-      - data/topics.csv
-      - scripts/seed-topics.mjs
+      - data/themes.csv
+      - scripts/seed-themes.mjs
   # Actions 画面から手動実行もできる
   workflow_dispatch:
 
@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   seed:
-    name: Seed topics to production
+    name: Seed themes to production
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -30,10 +30,10 @@ jobs:
 
       # main へのマージ時は Supabase のマイグレーション適用（GitHub 連携）と同時に走るため、
       # スキーマがまだ古い（終了コード 2）ときは最大 10 分待って再試行する
-      - name: Seed topics
+      - name: Seed themes
         run: |
           for attempt in $(seq 1 20); do
-            node scripts/seed-topics.mjs && exit 0
+            node scripts/seed-themes.mjs && exit 0
             code=$?
             if [ "$code" -ne 2 ]; then exit "$code"; fi
             echo "::notice::マイグレーション適用待ち（${attempt}/20）。30 秒後に再試行します"
