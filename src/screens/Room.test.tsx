@@ -62,17 +62,17 @@ describe("Room", () => {
         submitted_count: 0,
         total_count: 0,
         sentences: null,
-        themes: { when: { id: "t1", text: "高校生の頃" } },
+        themes: { when: { id: "t1", text: "高校時代で一番楽しかった時期は？" } },
         my_entries: [],
       },
     };
     render(<Room session={session} onLeave={() => {}} />);
-    expect(screen.getByText("高校生の頃")).toBeTruthy();
+    expect(screen.getByText("高校時代で一番楽しかった時期は？")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "いつの小テーマを引き直す" }));
     expect(rerollTheme).toHaveBeenCalledWith(session, "rd", "when");
 
     // 操作中はボタンが無効になるので、終わるのを待ってから次の操作
-    const deal = screen.getByRole("button", { name: "この小テーマで配る" });
+    const deal = screen.getByRole("button", { name: "この質問で配る" });
     await waitFor(() => expect(deal).toHaveProperty("disabled", false));
     fireEvent.click(deal);
     expect(dealSlots).toHaveBeenCalledWith(session, "rd");
@@ -91,19 +91,31 @@ describe("Room", () => {
         total_count: 5,
         sentences: null,
         themes: {},
-        my_entries: [{ id: "e1", slot: "where", theme: "家の外", text: null, submitted: false }],
+        my_entries: [
+          {
+            id: "e1",
+            slot: "where",
+            theme: "最近よく行く場所は？",
+            example: "駅前のマック",
+            text: null,
+            submitted: false,
+          },
+        ],
       },
     };
     render(<Room session={session} onLeave={() => {}} />);
-    expect(screen.getByText("小テーマ: 家の外")).toBeTruthy();
-    fireEvent.change(screen.getByPlaceholderText("例: 体育館の裏で"), {
+    expect(screen.getByText("最近よく行く場所は？")).toBeTruthy();
+    // 質問に合った例がプレースホルダーに出る
+    expect(screen.getByPlaceholderText("例: 駅前のマック")).toBeTruthy();
+    // 助詞まで打っても外して送る
+    fireEvent.change(screen.getByRole("textbox"), {
       target: { value: "駅前で" },
     });
     fireEvent.click(screen.getByRole("button", { name: "送信" }));
-    expect(submitEntry).toHaveBeenCalledWith(session, "e1", "駅前で");
+    expect(submitEntry).toHaveBeenCalledWith(session, "e1", "駅前");
   });
 
-  it("発表: 文がつながって表示され、ホストは次へ進める", () => {
+  it("発表: 助詞付きで文がつながって表示され、ホストは次へ進める", () => {
     current = {
       ...base,
       room: { ...base.room, phase: "playing" },
@@ -117,9 +129,9 @@ describe("Room", () => {
         sentences: [
           [
             { slot: "when", text: "昨日" },
-            { slot: "where", text: "駅前で" },
-            { slot: "who", text: "姉が" },
-            { slot: "what", text: "スマホを" },
+            { slot: "where", text: "駅前" },
+            { slot: "who", text: "姉" },
+            { slot: "what", text: "スマホ" },
             { slot: "how", text: "なくした" },
           ],
         ],

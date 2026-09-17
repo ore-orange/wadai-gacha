@@ -81,6 +81,17 @@ input:focus {
   outline-offset: 1px;
 }
 
+.with-particle {
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  column-gap: 0.4rem;
+}
+
+.particle {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
 .code-input {
   font-size: 1.5rem;
   letter-spacing: 0.4em;
@@ -223,6 +234,13 @@ button.link {
 
 .entry {
   text-align: center;
+}
+
+.question {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.5;
 }
 
 .sentence-text {

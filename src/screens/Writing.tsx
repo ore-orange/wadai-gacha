@@ -1,6 +1,6 @@
 import { type FormEvent, useState } from "react";
 import type { MyEntry, Round } from "@/lib/game";
-import { slotLabel } from "@/lib/slots";
+import { SLOT_HINTS, SLOT_PARTICLES, slotLabel, stripParticle } from "@/lib/slots";
 
 type Props = {
   round: Round;
@@ -21,7 +21,7 @@ export function Writing({ round, busy, onSubmit }: Props) {
             あなたの担当は{" "}
             <strong>{pending.map((e) => `「${slotLabel(e.slot)}」`).join("と")}</strong>
             {pending.length > 1 ? ` の ${pending.length} 枠です` : " です"}
-            。小テーマに合う本当の出来事を書いてください
+            。質問に本当のことで答えてください
           </p>
           {pending.map((entry) => (
             <EntryForm key={entry.id} entry={entry} busy={busy} onSubmit={onSubmit} />
@@ -58,34 +58,33 @@ function EntryForm({
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    if (text.trim() === "") return;
-    onSubmit(entry.id, text);
+    const value = stripParticle(entry.slot, text);
+    if (value === "") return;
+    onSubmit(entry.id, value);
   };
 
   return (
     <form className="card entry" onSubmit={handleSubmit}>
       <p className="slot-label big">{slotLabel(entry.slot)}</p>
-      <p className="theme-text big">小テーマ: {entry.theme}</p>
-      <label className="field">
-        <span className="sr-only">{slotLabel(entry.slot)}の内容</span>
+      <p className="question">{entry.theme}</p>
+      <label className="field with-particle">
+        <span className="sr-only">{slotLabel(entry.slot)}の答え</span>
         <input
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder={PLACEHOLDERS[entry.slot]}
+          placeholder={entry.example ? `例: ${entry.example}` : undefined}
           maxLength={60}
         />
+        {SLOT_PARTICLES[entry.slot] && (
+          <span className="particle" aria-hidden="true">
+            {SLOT_PARTICLES[entry.slot]}
+          </span>
+        )}
       </label>
-      <button type="submit" disabled={busy || text.trim() === ""}>
+      <p className="note">{SLOT_HINTS[entry.slot]}</p>
+      <button type="submit" disabled={busy || stripParticle(entry.slot, text) === ""}>
         送信
       </button>
     </form>
   );
 }
-
-const PLACEHOLDERS: Record<MyEntry["slot"], string> = {
-  when: "例: 高 2 の文化祭で",
-  where: "例: 体育館の裏で",
-  who: "例: 姉が",
-  what: "例: 焼きそばを",
-  how: "例: 全部落とした",
-};

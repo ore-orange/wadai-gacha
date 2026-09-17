@@ -1,5 +1,5 @@
 import type { Round } from "@/lib/game";
-import { slotLabel } from "@/lib/slots";
+import { slotLabel, withParticle } from "@/lib/slots";
 
 type Props = {
   round: Round;
@@ -20,7 +20,7 @@ export function Revealed({ round, isHost, busy, onNext, onFinish }: Props) {
           <p className="sentence-text">
             {parts.map((p) => (
               <span key={p.slot} className={`part part-${p.slot}`} title={slotLabel(p.slot)}>
-                {p.text ?? "（未入力）"}
+                {p.text === null ? "（未入力）" : withParticle(p.slot, p.text)}
               </span>
             ))}
           </p>

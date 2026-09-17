@@ -12,6 +12,7 @@ export type MyEntry = {
   id: string;
   slot: Slot;
   theme: string;
+  example: string | null;
   text: string | null;
   submitted: boolean;
 };

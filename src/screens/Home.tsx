@@ -35,7 +35,7 @@ export function Home({ onEnter }: Props) {
     <>
       <p className="lead">
         「いつ・どこで・だれが・なにを・どうした」の 5 つの枠を、みんなで 1 つずつ埋めて 1
-        つの文を作るゲーム。 各枠には毎回ガチャで小テーマが付きます。
+        つの文を作るゲーム。 各枠には毎回ガチャで質問が付き、それに本当のことで答えます。
       </p>
 
       <label className="field">
